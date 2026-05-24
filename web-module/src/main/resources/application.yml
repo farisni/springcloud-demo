@@ -11,3 +11,8 @@ spring:
     redis:
       host: 192.168.8.112
       port: 6379
+  kafka:
+    bootstrap-servers: 192.168.8.112:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer

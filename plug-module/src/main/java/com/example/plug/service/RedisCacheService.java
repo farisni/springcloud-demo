@@ -1,4 +1,4 @@
-package com.example.data.service;
+package com.example.plug.service;
 
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;

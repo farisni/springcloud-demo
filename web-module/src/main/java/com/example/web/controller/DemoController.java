@@ -1,6 +1,6 @@
 package com.example.web.controller;
 
-import com.example.data.service.RedisCacheService;
+import com.example.plug.service.RedisCacheService;
 import com.example.web.entity.Member;
 import com.example.web.mapper.MemberMapper;
 import org.springframework.beans.factory.annotation.Autowired;

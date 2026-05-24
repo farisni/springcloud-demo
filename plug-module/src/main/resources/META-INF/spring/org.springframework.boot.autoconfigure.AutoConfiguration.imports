@@ -1,1 +1,3 @@
-com.example.data.DataPluginAutoConfiguration
+com.example.plug.MybatisPlusPluginConfiguration
+com.example.plug.RedisPluginConfiguration
+com.example.plug.KafkaPluginConfiguration

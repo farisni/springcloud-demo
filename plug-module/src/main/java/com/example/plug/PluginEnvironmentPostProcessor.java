@@ -1,4 +1,4 @@
-package com.example.data;
+package com.example.plug;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
@@ -14,7 +14,7 @@ import java.util.Map;
  * 当未配置 spring.datasource.url 时，自动将其加入排除列表，
  * 避免 "Failed to configure a DataSource" 启动报错。
  */
-public class DataPluginEnvironmentPostProcessor implements EnvironmentPostProcessor {
+public class PluginEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
     private static final String DATASOURCE_AUTO_CONFIG =
             "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration";
