@@ -11,15 +11,27 @@ springcloud-demo/
 └── web-module/        # Web 应用（引入依赖 + 写 YAML 即可）
 ```
 
+### plug-module 内部结构
+
+```
+plug-module/src/main/java/com/example/plug/
+├── MybatisPlusPluginConfiguration.java   # spring.datasource.url → MybatisPlusInterceptor
+├── RedisPluginConfiguration.java         # spring.data.redis.host → RedissonClient
+├── KafkaPluginConfiguration.java         # spring.kafka.bootstrap-servers → KafkaTemplate
+├── PluginEnvironmentPostProcessor.java   # 自动排除 DataSourceAutoConfiguration
+└── service/
+    └── RedisCacheService.java            # 通用 Redis 缓存工具
+```
+
 ## 核心理念
 
-**只需写 YAML 配置，无需任何排除、无需任何注解。**
+**只需写 YAML 配置，一行 exclude 都不用写。**
 
 | YAML 配置 | 自动激活 |
 |----------|---------|
-| 配了 `spring.data.redis.host` | RedissonClient（JsonJacksonCodec） |
-| 配了 `spring.datasource.url` | MyBatis-Plus（分页插件 + MapperScan） |
-| 配了 `spring.kafka.bootstrap-servers` | KafkaTemplate（String 序列化） |
+| `spring.data.redis.host` | RedissonClient（JsonJacksonCodec，连接池 32/8） |
+| `spring.datasource.url` | MyBatis-Plus（PostgreSQL 分页插件，单页上限 1000） |
+| `spring.kafka.bootstrap-servers` | KafkaTemplate（StringSerializer） |
 
 三个组件完全独立，配哪个启哪个，都配都启，都不配零作用。
 
@@ -90,31 +102,33 @@ curl http://localhost:8080/demo/member/list
 
 ```
 应用启动
-  → EnvironmentPostProcessor 检查 spring.datasource.url
+  → PluginEnvironmentPostProcessor 检查 spring.datasource.url
       没配 → 自动排除 DataSourceAutoConfiguration
-      配了 → 放行，DataSource 正常初始化
-  → MybatisPlusPluginConfiguration / RedisPluginConfiguration / KafkaPluginConfiguration 各自独立加载
+      配了 → 放行
+  → 三个 PluginConfiguration 各自独立加载
       @ConditionalOnProperty 检查 YAML 配置
       配了 → 注入对应 Bean
       没配 → 跳过
   → 应用正常启动
 ```
 
-### 三个独立配置类
+### 条件注入：`@ConditionalOnProperty`
 
-每个插件一个独立的 `@Configuration` 类，注册在 `AutoConfiguration.imports`：
+每个插件一个独立的 `@Configuration` 类，通过 `@ConditionalOnProperty` 做开关，注册在 `AutoConfiguration.imports`：
 
-- **`MybatisPlusPluginConfiguration`** — `@ConditionalOnProperty(prefix = "spring.datasource", name = "url")`，注入 `MybatisPlusInterceptor` 分页插件
-- **`RedisPluginConfiguration`** — `@ConditionalOnProperty(prefix = "spring.data.redis", name = "host")`，注入 `Environment` 读取 host/port，创建 `RedissonClient`（`JsonJacksonCodec`，连接池 32/8）
-- **`KafkaPluginConfiguration`** — `@ConditionalOnProperty(prefix = "spring.kafka", name = "bootstrap-servers")`，`KafkaTemplate` 由 Spring Boot 自动创建，此处仅作为条件开关
+| 配置类 | 激活条件 | 注入的 Bean |
+|--------|---------|------------|
+| `MybatisPlusPluginConfiguration` | `spring.datasource.url` | `MybatisPlusInterceptor` |
+| `RedisPluginConfiguration` | `spring.data.redis.host` | `RedissonClient` |
+| `KafkaPluginConfiguration` | `spring.kafka.bootstrap-servers` | `KafkaTemplate`（Boot 自动创建） |
 
-选 `@ConditionalOnProperty` 的理由：插件使用者唯一需要关心的就是 YAML 配置，配了就启、不配就关，最符合直觉。
+每个类都带 `@ComponentScan("com.example.plug")`，确保 `RedisCacheService` 等工具类能被扫描到。重复扫描不会冲突，Spring 会去重。
 
-### PluginEnvironmentPostProcessor — 透明排除
+### 透明排除：`PluginEnvironmentPostProcessor`
 
-`DataSourceAutoConfiguration` 只要 classpath 上有 JDBC 驱动就会无条件初始化并可能报错。`EnvironmentPostProcessor` 在自动配置之前检查 `spring.datasource.url`，没配就自动排除。
+`DataSourceAutoConfiguration` 是 Spring Boot 内置的，只要 classpath 上有 JDBC 驱动就会无条件初始化。`PluginEnvironmentPostProcessor` 在所有自动配置之前检查 `spring.datasource.url`——没配就自动把 `DataSourceAutoConfiguration` 加入排除列表，对使用者完全透明。
 
-> `KafkaAutoConfiguration` 不会在缺配置时导致启动失败，因此无需额外排除。
+`KafkaAutoConfiguration` 在缺配置时不会导致启动失败，因此无需额外排除。
 
 注册方式：`META-INF/spring.factories`
 
@@ -122,7 +136,11 @@ curl http://localhost:8080/demo/member/list
 org.springframework.boot.env.EnvironmentPostProcessor=com.example.plug.PluginEnvironmentPostProcessor
 ```
 
-> MyBatis-Plus 3.5.11 将 `PaginationInnerInterceptor` 从 `mybatis-plus-extension` 移到了 `mybatis-plus-jsqlparser`，需要显式引入该依赖。
+### RedissonClient 连接地址
+
+不硬编码，从 `Environment` 读取 `spring.data.redis.host` 和 `port`，拼接为 `redis://host:port`。改配置不用改代码。
+
+> MyBatis-Plus 3.5.11 将 `PaginationInnerInterceptor` 从 `mybatis-plus-extension` 移到了 `mybatis-plus-jsqlparser`，需显式引入该依赖。
 
 ## 版本
 
