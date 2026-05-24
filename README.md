@@ -1,6 +1,6 @@
 # Spring Cloud 条件化数据插件 Demo
 
-基于 Spring Boot 3.5.1 + Spring Cloud 2025.0.1，演示「只写 YAML 配置，按需启用 MyBatis-Plus / Redis」的插件架构。
+基于 Spring Boot 3.5.1 + Spring Cloud 2025.0.1，演示「只写 YAML 配置，按需启用 MyBatis-Plus / Redisson」的插件架构。
 
 ## 项目结构
 
@@ -17,7 +17,7 @@ springcloud-demo/
 
 | YAML 配置 | 自动激活 |
 |----------|---------|
-| 配了 `spring.data.redis.host` | RedisTemplate（Jackson2Json 序列化） |
+| 配了 `spring.data.redis.host` | RedissonClient（JsonJacksonCodec） |
 | 配了 `spring.datasource.url` | MyBatis-Plus（分页插件 + MapperScan） |
 
 两个组件完全独立，配哪个启哪个，都配都启，都不配零作用。
@@ -88,7 +88,7 @@ curl http://localhost:8080/demo/db/test
 顶层 `@Configuration` + `@ComponentScan("com.example.data")`，内嵌两个独立内部类：
 
 - `MyBatisPlusPluginConfiguration` — `@ConditionalOnProperty(prefix = "spring.datasource", name = "url")`，激活时注册 `MybatisPlusInterceptor` 分页插件 + `@MapperScan`
-- `RedisPluginConfiguration` — `@ConditionalOnProperty(prefix = "spring.data.redis", name = "host")`，激活时注册 `RedisTemplate<String, Object>`（Jackson2Json 序列化）
+- `RedisPluginConfiguration` — `@ConditionalOnProperty(prefix = "spring.data.redis", name = "host")`，激活时注册 `RedissonClient`（`JsonJacksonCodec`，单机模式，连接池 32/8）
 
 选 `@ConditionalOnProperty` 而非自定义注解的理由：插件使用者唯一需要关心的就是 YAML 配置，配了就启、不配就关，最符合直觉。
 
@@ -113,5 +113,5 @@ org.springframework.boot.env.EnvironmentPostProcessor=com.example.data.DataPlugi
 | Spring Boot | 3.5.1 |
 | Spring Cloud | 2025.0.1 |
 | MyBatis-Plus | 3.5.11 |
+| Redisson | 3.40.2 |
 | PostgreSQL 驱动 | 自动管理 |
-| Redis 客户端 | Lettuce（Boot 默认） |

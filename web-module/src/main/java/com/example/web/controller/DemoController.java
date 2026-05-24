@@ -1,8 +1,8 @@
 package com.example.web.controller;
 
-import com.example.data.entity.User;
-import com.example.data.mapper.UserMapper;
 import com.example.data.service.RedisCacheService;
+import com.example.web.entity.User;
+import com.example.web.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/demo")
@@ -30,7 +29,7 @@ public class DemoController {
         }
 
         try {
-            redisCacheService.set("demo::hello", "Hello from plug-module Redis!", 60, TimeUnit.SECONDS);
+            redisCacheService.set("demo::hello", "Hello from plug-module Redisson!", 60);
             Object value = redisCacheService.get("demo::hello");
             redisCacheService.delete("demo::hello");
             return Map.of("status", "ok", "value", String.valueOf(value));
