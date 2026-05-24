@@ -21,10 +21,6 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @ComponentScan(basePackages = "com.example.data")
 public class DataPluginAutoConfiguration {
 
-    /**
-     * MyBatis-Plus 插件开关：
-     * 仅当配置文件包含 spring.datasource.url 时才生效
-     */
     @Configuration
     @ConditionalOnProperty(prefix = "spring.datasource", name = "url")
     @MapperScan("com.example.data.mapper")
@@ -40,10 +36,6 @@ public class DataPluginAutoConfiguration {
         }
     }
 
-    /**
-     * Redis 插件开关：
-     * 仅当配置文件包含 spring.data.redis.host 时才生效
-     */
     @Configuration
     @ConditionalOnProperty(prefix = "spring.data.redis", name = "host")
     public static class RedisPluginConfiguration {
