@@ -1,0 +1,6 @@
+com/example/data/entity/User.class
+com/example/data/DataPluginAutoConfiguration$MyBatisPlusPluginConfiguration.class
+com/example/data/mapper/UserMapper.class
+com/example/data/DataPluginAutoConfiguration$RedisPluginConfiguration.class
+com/example/data/service/RedisCacheService.class
+com/example/data/DataPluginAutoConfiguration.class
