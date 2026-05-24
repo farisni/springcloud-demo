@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 @Configuration
 @ComponentScan(basePackages = "com.example.data")
@@ -35,10 +36,12 @@ public class DataPluginAutoConfiguration {
     public static class RedisPluginConfiguration {
 
         @Bean(destroyMethod = "shutdown")
-        public RedissonClient redissonClient() {
+        public RedissonClient redissonClient(Environment env) {
+            String host = env.getProperty("spring.data.redis.host", "localhost");
+            String port = env.getProperty("spring.data.redis.port", "6379");
             Config config = new Config();
             config.useSingleServer()
-                    .setAddress("redis://localhost:6379")
+                    .setAddress("redis://" + host + ":" + port)
                     .setConnectionPoolSize(32)
                     .setConnectionMinimumIdleSize(8);
             config.setCodec(new JsonJacksonCodec());

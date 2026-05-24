@@ -1,0 +1,11 @@
+### 查询全部成员
+GET http://localhost:8080/demo/member/list
+Content-Type: application/json
+
+### 按 ID 查单个成员
+GET http://localhost:8080/demo/member/7
+Content-Type: application/json
+
+### Redis 连通性测试
+GET http://localhost:8080/demo/redis/test
+Content-Type: application/json

@@ -1,10 +1,11 @@
 package com.example.web.controller;
 
 import com.example.data.service.RedisCacheService;
-import com.example.web.entity.User;
-import com.example.web.mapper.UserMapper;
+import com.example.web.entity.Member;
+import com.example.web.mapper.MemberMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,7 +20,7 @@ public class DemoController {
     private RedisCacheService redisCacheService;
 
     @Autowired(required = false)
-    private UserMapper userMapper;
+    private MemberMapper memberMapper;
 
     @GetMapping("/redis/test")
     public Map<String, Object> testRedis() {
@@ -38,16 +39,34 @@ public class DemoController {
         }
     }
 
-    @GetMapping("/db/test")
-    public Map<String, Object> testDb() {
-        if (userMapper == null) {
+    @GetMapping("/member/list")
+    public Map<String, Object> listMembers() {
+        if (memberMapper == null) {
             return Map.of("status", "disabled",
                     "message", "MyBatis-Plus 未启用，请配置 spring.datasource.url");
         }
 
         try {
-            List<User> users = userMapper.selectList(null);
-            return Map.of("status", "ok", "count", users.size());
+            List<Member> members = memberMapper.selectList(null);
+            return Map.of("status", "ok", "count", members.size(), "data", members);
+        } catch (Exception e) {
+            return Map.of("status", "error", "message", e.getMessage());
+        }
+    }
+
+    @GetMapping("/member/{id}")
+    public Map<String, Object> getMember(@PathVariable Long id) {
+        if (memberMapper == null) {
+            return Map.of("status", "disabled",
+                    "message", "MyBatis-Plus 未启用，请配置 spring.datasource.url");
+        }
+
+        try {
+            Member member = memberMapper.selectById(id);
+            if (member == null) {
+                return Map.of("status", "error", "message", "成员不存在");
+            }
+            return Map.of("status", "ok", "data", member);
         } catch (Exception e) {
             return Map.of("status", "error", "message", e.getMessage());
         }

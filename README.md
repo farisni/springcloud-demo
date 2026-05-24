@@ -64,7 +64,7 @@ spring:
 
 ```bash
 curl http://localhost:8080/demo/redis/test
-curl http://localhost:8080/demo/db/test
+curl http://localhost:8080/demo/member/list
 ```
 
 ## 实现方案
@@ -87,10 +87,12 @@ curl http://localhost:8080/demo/db/test
 
 顶层 `@Configuration` + `@ComponentScan("com.example.data")`，内嵌两个独立内部类：
 
-- `MyBatisPlusPluginConfiguration` — `@ConditionalOnProperty(prefix = "spring.datasource", name = "url")`，激活时注册 `MybatisPlusInterceptor` 分页插件 + `@MapperScan`
-- `RedisPluginConfiguration` — `@ConditionalOnProperty(prefix = "spring.data.redis", name = "host")`，激活时注册 `RedissonClient`（`JsonJacksonCodec`，单机模式，连接池 32/8）
+- `MyBatisPlusPluginConfiguration` — `@ConditionalOnProperty(prefix = "spring.datasource", name = "url")`，激活时注册 `MybatisPlusInterceptor` 分页插件
+- `RedisPluginConfiguration` — `@ConditionalOnProperty(prefix = "spring.data.redis", name = "host")`，激活时注入 `Environment` 读取 `spring.data.redis.host` / `port` 拼接为 `redis://{host}:{port}`，创建 `RedissonClient`（`JsonJacksonCodec`，连接池 32/8）
 
 选 `@ConditionalOnProperty` 而非自定义注解的理由：插件使用者唯一需要关心的就是 YAML 配置，配了就启、不配就关，最符合直觉。
+
+不硬编码地址，而是从 `Environment` 读：`RedissonClient` 的连接地址来自 `application.yml`，改配置不用改代码。
 
 ### DataPluginEnvironmentPostProcessor — 透明排除
 
